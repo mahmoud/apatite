@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import os
 import imp
@@ -5,7 +6,7 @@ from setuptools import setup, find_packages
 
 __author__ = "Mahmoud Hashemi"
 __contact__ = "mahmoud@hatnote.com"
-__license__ = 'Apache License 2.0'
+__license__ = 'GPLv3'
 __url__ = 'https://github.com/mahmoud/apatite'
 
 CUR_PATH = os.path.abspath(os.path.dirname(__file__))
@@ -15,7 +16,7 @@ __version__ = _version_mod.__version__
 
 setup(
     name="apatite",
-    description="Handy secret management system with a convenient CLI and readable storage format.",
+    description="CLI for awesomer Awesome™ list management and analysis. Originally designed for managing https://github.com/mahmoud/awesome-python-applications",
     author=__author__,
     author_email=__contact__,
     url=__url__,
@@ -29,10 +30,12 @@ setup(
     entry_points={'console_scripts': ['apatite = apatite.__main__:main']},
     install_requires=['attrs',
                       'boltons',
+                      'face',
                       'ruamel.yaml',
                       'glom',
                       'hyperlink',
-                      'schema']
+                      'schema',
+                      'tqdm']
 )
 
 """
