@@ -144,6 +144,7 @@ def console(plist, pdir):
 def _get_commit_dt_text(text):
     return isoparse(text.rsplit(':', 1)[0]).isoformat().rsplit('.', 1)[0].replace('T', ' ')
 
+
 def set_repo_added_dates(file, plist, targets):
     project_list = plist.project_list
     if targets:

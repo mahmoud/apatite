@@ -13,6 +13,7 @@ from ruamel.yaml.comments import CommentedMap
 from boltons.dictutils import OMD
 from boltons.fileutils import iter_find_files, atomic_save
 from boltons.iterutils import soft_sorted, redundant, unique
+from boltons.timeutils import isoparse
 from boltons.strutils import slugify
 from hyperlink import parse as url_parse
 
@@ -66,6 +67,7 @@ _PROJECT_SCHEMA = schema.Schema(
     {'name': str,
      schema.Optional(schema.Regex('\w+_url')): parse_valid_url,
      'repo_url': parse_valid_web_url,
+     schema.Optional('date_added'): isoparse,
      'desc': str,
      'tags': tuple},
     ignore_extra_keys=False)
@@ -293,6 +295,9 @@ class ProjectList(object):
             first_topic = topic_tags[0]
             if first_topic in seen_topics:
                 continue
+            if first_topic.lower() in seen_topics:
+                import pdb;pdb.set_trace()
+            print(first_topic, '-> seen topics')
             seen_topics.add(first_topic)
             cur_pdict.yaml_set_start_comment('\n' + first_topic.title() + '\n\n')
 
