@@ -18,6 +18,7 @@
 * count python files
 * update progress bar to say "(done)" instead of name of last project (wicd rn)
 * tokei thinks .master = asp.net (also, ignore contrib, ignore vendor, ignore single files)
+* "pure python" (need to separate out docs and other non-logical files detected by tokei)
 
 # Stats Ideas
 
