@@ -83,6 +83,8 @@ Spotchecking the license output
 # Features
 
 * Stale projects (have not been updated for more than X% of their lifespan)
+* Automation (detect tox, Makefile, scons, etc. usage)
+* i18n etc.
 
 # Interesting findings
 
@@ -93,3 +95,10 @@ Spotchecking the license output
 * 90 tox.inis (I'm used to seeing tox for libraries, not applications)
 
 <--! -->
+
+# apatite features
+
+* RSS feed
+* Date added (going to have to do a git-aware util to backfill)
+* Archiving
+* utils to help backfill pypi links, wikipedia links, funding links

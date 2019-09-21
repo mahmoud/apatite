@@ -24,11 +24,12 @@ from boltons.fileutils import iter_find_files, atomic_save, mkdir_p, iter_find_f
 from boltons.timeutils import isoparse, parse_timedelta
 from boltons.jsonutils import JSONLIterator
 from boltons.setutils import IndexedSet
-from boltons.iterutils import remap
+from boltons.iterutils import remap, first
 
 from .dal import ProjectList
 from .formatting import format_tag_toc, format_all_categories
 from ._version import __version__
+from .utils import run_cap
 
 _ANSI_FORE_RED = '\x1b[31m'
 _ANSI_FORE_GREEN = '\x1b[32m'
@@ -118,6 +119,7 @@ def main(argv=None):
     cmd.add(show_recent_metrics)
     cmd.add(export_metrics)
     cmd.add(show_exportable_metrics)
+    cmd.add(set_repo_added_dates)
     cmd.add(console)
     cmd.add(print_version, name='version')
 
@@ -137,6 +139,34 @@ def console(plist, pdir):
     "use pdb to explore plist and pdir"
     import pdb;pdb.set_trace()
     return
+
+
+def _get_commit_dt_text(text):
+    return isoparse(text.rsplit(':', 1)[0]).isoformat().rsplit('.', 1)[0].replace('T', ' ')
+
+def set_repo_added_dates(file, plist, targets):
+    project_list = plist.project_list
+    if targets:
+        project_list = [proj for proj in project_list if (proj.name in targets or proj.name_slug in targets)]
+    results = []
+    for project in tqdm(project_list):
+        repo_url = project.repo_url
+        res = run_cap(['git', 'log', '--date=iso-strict', '--pretty=format:"%h%x09%an%x09%ad%x09%s"',
+                       '--reverse', '--source', '-S', str(repo_url), '--', file])
+        first_line = first(res.stdout.splitlines())
+        if not first_line:
+            print('nothing for', repo_url)
+            continue  # TODO
+        parts = [p.strip() for p in first_line.strip('"').split('\t')]
+        dt_text = parts[2]
+        parsed_date_text = _get_commit_dt_text(dt_text)
+        results.append((parsed_date_text, project.name))
+    results.sort()
+    from pprint import pprint
+    pprint(results)
+    return
+
+    # git log --pretty=format:"%h%x09%an%x09%ad%x09%s" --reverse --source -S 'https://github.com/edx/edx-platform' -- projects.yaml
 
 
 def render(plist, pdir):
