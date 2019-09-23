@@ -212,6 +212,7 @@ class Project(object):
             val = kwargs.pop(k)
             val = parse_valid_url(val)
             cur_urls += ((k[:-4], val),)
+            cur_urls = soft_sorted(cur_urls, first=['repo', 'home'], last=['wp'], key=lambda x: x[0])
             kwargs['urls'] = cur_urls
         kwargs['orig_data'] = d
         return cls(**kwargs)
@@ -219,12 +220,15 @@ class Project(object):
     def to_dict(self):
         # deepcopy necessary to maintain comments
         ret = copy.deepcopy(self._orig_data) if self._orig_data else CommentedMap()
-        # print(to_yaml(ret), end='')
         ret['name'] = self.name
+        for i, (url_type, url) in enumerate(self.urls):
+            key = url_type + '_url'
+            ret.pop(key, None)
+            ret.insert(1 + i, key, str(url))
         ret['desc'] = self.desc
+        ret.move_to_end('desc')
         ret['tags'] = self._tags
-        for url_type, url in self.urls:
-            ret[url_type + '_url'] = str(url)
+        ret.move_to_end('tags')
         return ret
 
 
@@ -295,9 +299,6 @@ class ProjectList(object):
             first_topic = topic_tags[0]
             if first_topic in seen_topics:
                 continue
-            if first_topic.lower() in seen_topics:
-                import pdb;pdb.set_trace()
-            print(first_topic, '-> seen topics')
             seen_topics.add(first_topic)
             cur_pdict.yaml_set_start_comment('\n' + first_topic.title() + '\n\n')
 

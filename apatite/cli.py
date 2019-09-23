@@ -151,9 +151,10 @@ def set_repo_added_dates(file, plist, targets):
         project_list = [proj for proj in project_list if (proj.name in targets or proj.name_slug in targets)]
     results = []
     for project in tqdm(project_list):
-        repo_url = project.repo_url
+        # rstrip in case it was added in a denormalized form
+        repo_url = str(project.repo_url).rstrip('/')
         res = run_cap(['git', 'log', '--date=iso-strict', '--pretty=format:"%h%x09%an%x09%ad%x09%s"',
-                       '--reverse', '--source', '-S', str(repo_url), '--', file])
+                       '--reverse', '--source', '-S', repo_url, '--', file])
         first_line = first(res.stdout.splitlines())
         if not first_line:
             print('nothing for', repo_url)
@@ -229,6 +230,8 @@ def normalize(plist, pfile):
     and format divergences, overwrites the yaml listing"""
     plist.normalize()
     new_yaml = plist.to_yaml()
+    # say no to trailing whitespace
+    new_yaml = '\n'.join([line.rstrip() for line in new_yaml.splitlines()])
     with atomic_save(pfile) as f:
         f.write(new_yaml.encode('utf8'))
     return
