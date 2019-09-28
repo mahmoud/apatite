@@ -19,6 +19,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import attr
 import glom
 from tqdm import tqdm
+from .ashes import AshesEnv
 from face import Command, Flag, face_middleware, ListParam
 from boltons.fileutils import iter_find_files, atomic_save, mkdir_p, iter_find_files
 from boltons.timeutils import isoparse, parse_timedelta
@@ -27,7 +28,7 @@ from boltons.setutils import IndexedSet
 from boltons.iterutils import remap, first
 
 from .dal import ProjectList
-from .formatting import format_tag_toc, format_all_categories
+from .formatting import format_tag_toc, format_all_categories, get_url_list
 from ._version import __version__
 from .utils import run_cap
 
@@ -152,6 +153,8 @@ def set_repo_added_dates(pfile, plist, targets, dry_run):
     results = []
     updated_proj_list = []
     for project in tqdm(project_list):
+        if project.date_added:
+            continue
         # rstrip in case it was added in a denormalized form
         repo_url = str(project.repo_url).rstrip('/')
         res = run_cap(['git', 'log', '--date=iso-strict', '--pretty=format:"%h%x09%an%x09%ad%x09%s"',
@@ -166,10 +169,8 @@ def set_repo_added_dates(pfile, plist, targets, dry_run):
         results.append((project.name, parsed_date))
         updated_proj_list.append(attr.evolve(project, date_added=parsed_date))
     results.sort(key=lambda x: x[1])
-    from pprint import pprint
-    pprint(results)
     plist.update_projects(updated_proj_list)
-    if not dry_run:
+    if not dry_run and updated_project_list:
         normalize(pfile=pfile, plist=plist)
     return
 
@@ -200,6 +201,29 @@ def render(plist, pdir):
         output_text = tmpl_text.format(**context)
         with atomic_save(pdir + '/' + target_filename) as f:
             f.write(output_text.encode('utf8'))
+
+    feed_tmpl_path = templates_path + '/atom.xml'
+    if os.path.exists(feed_tmpl_path):
+        def _stderr_log_func(level, name, message):
+            import sys
+            sys.stderr.write('%s - %s - %s\n' % (level.upper(), name, message))
+            sys.stderr.flush()
+
+        ashes_env = AshesEnv([templates_path], log_func=_stderr_log_func)
+        proj_dict_list = []
+        for proj in plist.project_list:
+            cur = proj.to_dict()
+            cur['name_slug'] = proj.name_slug
+            cur['date_added_utc'] = proj.date_added.isoformat() + 'Z'
+            cur['urls'] = get_url_list(proj)
+            proj_dict_list.append(cur)
+        cur_dt = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+        res = ashes_env.render('atom.xml',
+                               {'projects': sorted(proj_dict_list, key=lambda x: x['date_added'], reverse=True),
+                                'last_generated_utc': cur_dt})
+        with atomic_save(pdir + '/atom.xml') as f:
+            f.write(res.encode('utf8'))
+
 
     return
 

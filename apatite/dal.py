@@ -215,7 +215,7 @@ class Project(object):
             val = parse_valid_url(val)
             cur_urls += ((k[:-4], val),)
             cur_urls = soft_sorted(cur_urls, first=['repo', 'home'], last=['wp'], key=lambda x: x[0])
-            kwargs['urls'] = cur_urls
+            kwargs['urls'] = tuple(cur_urls)
         kwargs['orig_data'] = d
         return cls(**kwargs)
 

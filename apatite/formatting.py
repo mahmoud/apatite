@@ -8,6 +8,7 @@ INDENT = ' ' * 4
 # sort of document the expected ones, even when they match the
 # .title() pattern
 _URL_LABEL_MAP = {'wp': 'WP',
+                  'gh': 'gh',
                   'home': 'Home',
                   'repo': 'Repo',
                   'docs': 'Docs',
@@ -18,6 +19,11 @@ _URL_ORDER = ['repo', 'home', 'wp', 'docs']
 
 def _format_url_name(name):
     return _URL_LABEL_MAP.get(name, name.title())
+
+def get_url_list(project):
+    urls = [u for u in project.urls if u[0] != 'clone']  # clone_urls aren't for display
+    return [(_format_url_name(name), url) for name, url in
+            soft_sorted(urls, key=lambda x: x[0], first=_URL_ORDER[:-1], last=_URL_ORDER[-1:])]
 
 
 def format_category(project_map, tag_entry):
@@ -40,9 +46,7 @@ def format_category(project_map, tag_entry):
 
         for project in project_map[tag_entry]:
             tmpl = '  {bullet} **{name}** - ({links}) {desc}'
-            urls = [u for u in project.urls if u[0] != 'clone']  # clone_urls aren't for display
-            links = ', '.join(['[%s](%s)' % (_format_url_name(name), url) for name, url
-                               in soft_sorted(urls, key=lambda x: x[0], first=_URL_ORDER[:-1], last=_URL_ORDER[-1:])])
+            links = ', '.join(['[%s](%s)' % item for item in get_url_list(project)])
 
             line = tmpl.format(bullet=BULLET, name=project.name, links=links, desc=project.desc)
             if len(project._tags) > 1:

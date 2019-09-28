@@ -1,4 +1,5 @@
 attrs==19.1.0
+ashes==19.2.0
 boltons==19.1.0
 contextlib2==0.5.5
 -e git+git@github.com:mahmoud/face.git@a7809f99affbfe8aeb6f7bc1208aed6a52495e37#egg=face
