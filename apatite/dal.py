@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import io
 import os
 import copy
+import datetime
 
 import attr
 import schema
@@ -13,6 +14,7 @@ from ruamel.yaml.comments import CommentedMap
 from boltons.dictutils import OMD
 from boltons.fileutils import iter_find_files, atomic_save
 from boltons.iterutils import soft_sorted, redundant, unique
+from boltons.timeutils import isoparse
 from boltons.strutils import slugify
 from hyperlink import parse as url_parse
 
@@ -66,6 +68,7 @@ _PROJECT_SCHEMA = schema.Schema(
     {'name': str,
      schema.Optional(schema.Regex('\w+_url')): parse_valid_url,
      'repo_url': parse_valid_web_url,
+     schema.Optional('date_added'): datetime.datetime,
      'desc': str,
      'tags': tuple},
     ignore_extra_keys=False)
@@ -148,6 +151,7 @@ class Project(object):
     desc = attr.ib(default='')
     _tags = attr.ib(default=())
     urls = attr.ib(default=())
+    date_added = attr.ib(default=None)
     _orig_data = attr.ib(default=None, repr=False, cmp=False)
 
     @property
@@ -210,6 +214,7 @@ class Project(object):
             val = kwargs.pop(k)
             val = parse_valid_url(val)
             cur_urls += ((k[:-4], val),)
+            cur_urls = soft_sorted(cur_urls, first=['repo', 'home'], last=['wp'], key=lambda x: x[0])
             kwargs['urls'] = cur_urls
         kwargs['orig_data'] = d
         return cls(**kwargs)
@@ -217,12 +222,17 @@ class Project(object):
     def to_dict(self):
         # deepcopy necessary to maintain comments
         ret = copy.deepcopy(self._orig_data) if self._orig_data else CommentedMap()
-        # print(to_yaml(ret), end='')
         ret['name'] = self.name
+        for i, (url_type, url) in enumerate(self.urls):
+            key = url_type + '_url'
+            ret.pop(key, None)
+            ret.insert(1 + i, key, str(url))
+        if self.date_added:
+            ret['date_added'] = self.date_added
         ret['desc'] = self.desc
+        ret.move_to_end('desc')
         ret['tags'] = self._tags
-        for url_type, url in self.urls:
-            ret[url_type + '_url'] = str(url)
+        ret.move_to_end('tags')
         return ret
 
 
@@ -272,7 +282,12 @@ class ProjectList(object):
     @classmethod
     def from_path(cls, path):
         data = round_trip_load(open(path, encoding='utf-8'))
-        return cls(data['projects'], data['tagsonomy'])
+        return cls.from_dict(data)
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(project_list=data['projects'],
+                   tagsonomy=data['tagsonomy'])
 
     def to_dict(self):
         ret = CommentedMap()
@@ -301,6 +316,24 @@ class ProjectList(object):
 
     def to_yaml(self):
         return to_yaml(self.to_dict())
+
+    def get_project(self, name):
+        name_slug = slugify(name)
+        for proj in self.project_list:
+            if proj.name_slug == name_slug:
+                return proj
+        raise LookupError('no such project: %r' % name)
+
+    def update_projects(self, projects):
+        to_update = OMD([(slugify(p.name), p) for p in projects])
+        new_list = []
+        for proj in self.project_list:
+            if proj.name_slug not in to_update:
+                new_list.append(proj)
+                continue
+            new_list.append(to_update.pop(proj.name_slug))
+        new_list.extend(to_update.values())
+        self.project_list = new_list
 
     def normalize(self):
         # sort project list by first topic tag and name (lexi).

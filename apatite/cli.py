@@ -24,11 +24,12 @@ from boltons.fileutils import iter_find_files, atomic_save, mkdir_p, iter_find_f
 from boltons.timeutils import isoparse, parse_timedelta
 from boltons.jsonutils import JSONLIterator
 from boltons.setutils import IndexedSet
-from boltons.iterutils import remap
+from boltons.iterutils import remap, first
 
 from .dal import ProjectList
 from .formatting import format_tag_toc, format_all_categories
 from ._version import __version__
+from .utils import run_cap
 
 _ANSI_FORE_RED = '\x1b[31m'
 _ANSI_FORE_GREEN = '\x1b[32m'
@@ -118,6 +119,7 @@ def main(argv=None):
     cmd.add(show_recent_metrics)
     cmd.add(export_metrics)
     cmd.add(show_exportable_metrics)
+    cmd.add(set_repo_added_dates)
     cmd.add(console)
     cmd.add(print_version, name='version')
 
@@ -136,6 +138,39 @@ def main(argv=None):
 def console(plist, pdir):
     "use pdb to explore plist and pdir"
     import pdb;pdb.set_trace()
+    return
+
+
+def _get_commit_dt(text):
+    return isoparse(text.rsplit(':', 1)[0]).replace(second=0, microsecond=0)
+
+
+def set_repo_added_dates(pfile, plist, targets, dry_run):
+    project_list = plist.project_list
+    if targets:
+        project_list = [proj for proj in project_list if (proj.name in targets or proj.name_slug in targets)]
+    results = []
+    updated_proj_list = []
+    for project in tqdm(project_list):
+        # rstrip in case it was added in a denormalized form
+        repo_url = str(project.repo_url).rstrip('/')
+        res = run_cap(['git', 'log', '--date=iso-strict', '--pretty=format:"%h%x09%an%x09%ad%x09%s"',
+                       '--reverse', '--source', '-S', repo_url, '--', pfile])
+        first_line = first(res.stdout.splitlines())
+        if not first_line:
+            print('nothing for', repo_url)
+            continue  # TODO
+        parts = [p.strip() for p in first_line.strip('"').split('\t')]
+        dt_text = parts[2]
+        parsed_date = _get_commit_dt(dt_text)
+        results.append((project.name, parsed_date))
+        updated_proj_list.append(attr.evolve(project, date_added=parsed_date))
+    results.sort(key=lambda x: x[1])
+    from pprint import pprint
+    pprint(results)
+    plist.update_projects(updated_proj_list)
+    if not dry_run:
+        normalize(pfile=pfile, plist=plist)
     return
 
 
@@ -198,6 +233,8 @@ def normalize(plist, pfile):
     and format divergences, overwrites the yaml listing"""
     plist.normalize()
     new_yaml = plist.to_yaml()
+    # say no to trailing whitespace
+    new_yaml = '\n'.join([line.rstrip() for line in new_yaml.splitlines()])
     with atomic_save(pfile) as f:
         f.write(new_yaml.encode('utf8'))
     return
