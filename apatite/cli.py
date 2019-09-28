@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import attr
 import glom
 from tqdm import tqdm
-from .ashes import AshesEnv
+from ashes import AshesEnv
 from face import Command, Flag, face_middleware, ListParam
 from boltons.fileutils import iter_find_files, atomic_save, mkdir_p, iter_find_files
 from boltons.timeutils import isoparse, parse_timedelta
