@@ -151,7 +151,7 @@ class Project(object):
     desc = attr.ib(default='')
     _tags = attr.ib(default=())
     urls = attr.ib(default=())
-    date_added = attr.ib(default=None)
+    date_added = attr.ib(default=attr.Factory(lambda: datetime.datetime.now().replace(second=0, microsecond=0)))
     _orig_data = attr.ib(default=None, repr=False, cmp=False)
 
     @property
@@ -193,7 +193,7 @@ class Project(object):
             return ('git', repo_url)
         elif repo_url.host == 'bitbucket.org':
             return ('hg', repo_url.replace(path=(repo_url.path[0], repo_url.path[1])))
-        elif repo_url.host == 'code.launchpad.net':
+        elif repo_url.host == 'code.launchpad.net' or repo_url.host == 'launchpad.net':
             return ('bzr', 'lp:' + repo_url.path[0])
         return (None, None)
 
@@ -357,7 +357,7 @@ class ProjectList(object):
                 new_path = tuple([segm for segm in url.path if segm != ''])
                 clean_url = url.replace(path=new_path).normalize()
                 cleaned_urls.append((url_name, clean_url))
-            project = attr.evolve(project, urls=cleaned_urls)
+            project = attr.evolve(project, urls=tuple(cleaned_urls))
 
             project_list.append(project)
 

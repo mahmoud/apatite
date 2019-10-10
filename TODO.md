@@ -99,7 +99,11 @@ Spotchecking the license output
 
 # apatite features
 
-* RSS feed
-* Date added (going to have to do a git-aware util to backfill)
 * Archiving
 * utils to help backfill pypi links, wikipedia links, funding links
+
+# More stats
+
+* code of conduct
+* contributor guidelines
+* link stats (docs_link, etc.)

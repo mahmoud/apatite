@@ -153,7 +153,7 @@ def set_repo_added_dates(pfile, plist, targets, dry_run):
     results = []
     updated_proj_list = []
     for project in tqdm(project_list):
-        if project.date_added:
+        if project._orig_data.get('date_added'):
             continue
         # rstrip in case it was added in a denormalized form
         repo_url = str(project.repo_url).rstrip('/')
@@ -175,8 +175,9 @@ def set_repo_added_dates(pfile, plist, targets, dry_run):
     return
 
 
-def render(plist, pdir):
+def render(plist, pdir, pfile):
     "generate the list markdown from the yaml listing"
+    normalize(pfile=pfile, plist=plist)
     topic_map = plist.get_projects_by_type('topic')
     topic_toc_text = format_tag_toc(topic_map)
     projects_by_topic = format_all_categories(topic_map)
