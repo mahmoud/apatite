@@ -65,6 +65,12 @@ Spotchecking the license output
 * metrics should live in list repo
 * Stale projects (have not been updated for more than X% of their lifespan)
 
+## Configurability
+
+* apatite_config.yaml in the list repo
+* Right now, e.g., "repo_url" is always required, but maybe shouldn't be for other types of lists
+* Could be part of projects.yaml (like tagsonomy)
+
 # More stats
 
 * code of conduct
