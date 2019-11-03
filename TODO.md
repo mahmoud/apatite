@@ -1,3 +1,9 @@
+# The Static Site
+
+* [Google Doc](https://docs.google.com/document/d/1sspMYXWc0_RRKZAnirpZpLZPckzBTo3MhUiZsIeQkXU/edit?ts=5dbe01a8#heading=h.ii5p04a61s9b)
+* remap step in apatite that flattens data down to CSV, needs to become more nuanced because it make certain structures of data hard to express
+  e.g. packaging data only returns if it's docker or snap or etc. should be a list instead of all valid packaging approaches
+* metrics need to return dicts of tags with their confidence, first gen takes highest confidence, second gen returns all of them
 
 # Fetching/pulling
 
