@@ -64,6 +64,12 @@ Spotchecking the license output
 * utils to help backfill pypi links, wikipedia links, funding links
 * metrics should live in list repo
 * Stale projects (have not been updated for more than X% of their lifespan)
+* link checking
+  * Always try twice
+  * Output a list of broken links with date first seen broken.
+  * If list exists, update with last checked date/number of days down
+  * If a link is down for more than a week
+  * Differentiate between ssl cert out of date and other breakage (404, server not up)
 
 ## Configurability
 
