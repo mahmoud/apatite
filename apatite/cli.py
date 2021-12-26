@@ -346,7 +346,7 @@ def _pull_single_repo(proj, repo_dir, rm_cached=False):
                              stdout=stdout.decode('utf8'),
                              stderr=stderr,
                              start_time=started,
-                             end_time=datetime.datetime.utcnow()) # Bug? duratiion, start_time - end_time TypeError
+                             end_time=datetime.datetime.utcnow()) # Bug? duration, start_time - end_time TypeError
     if proc_res.returncode != 0:
         print_err('%r exited with code %r, stderr:' % (proc.args, proc_res.returncode))
         print_err(proc_res.stderr)
