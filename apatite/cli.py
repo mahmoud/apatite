@@ -28,7 +28,7 @@ from boltons.setutils import IndexedSet
 from boltons.iterutils import remap, first
 
 from .dal import ProjectList
-from .formatting import format_tag_toc, format_all_categories, get_url_list
+from .formatting import format_tag_toc, format_all_categories, get_url_list, format_changelog
 from ._version import __version__
 from .utils import run_cap
 
@@ -186,11 +186,15 @@ def render(plist, pdir, pfile):
     plat_toc_text = format_tag_toc(plat_map)
     projects_by_plat = format_all_categories(plat_map)
 
+    projects_by_date = plist.get_projects_by_date_added()
+    changelog_text = format_changelog(projects_by_date)
+
     context = {'TOPIC_TOC': topic_toc_text,
                'TOPIC_TEXT': projects_by_topic,
                'PLATFORM_TOC': plat_toc_text,
                'PLATFORM_TEXT': projects_by_plat,
-               'TOTAL_COUNT': len(plist.project_list)}
+               'TOTAL_COUNT': len(plist.project_list),
+               'CHANGELOG_TEXT': changelog_text}
 
     templates_path = pdir + '/templates/'
     if not os.path.isdir(templates_path):
@@ -224,7 +228,6 @@ def render(plist, pdir, pfile):
                                 'last_generated_utc': cur_dt})
         with atomic_save(pdir + '/atom.xml') as f:
             f.write(res.encode('utf8'))
-
 
     return
 

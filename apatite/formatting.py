@@ -96,3 +96,23 @@ def format_all_categories(project_map):
         parts.append(text)
 
     return '\n'.join(parts)
+
+
+def format_changelog(project_map):
+    parts = []
+
+    for date in project_map:
+        cur_projects = project_map.getlist(date)
+
+        parts.append('## ' + date.isoformat() + '\n')
+        for project in sorted(cur_projects, key=lambda p: p.name.lower()):
+            tmpl = '  {bullet} **{name}** - ({links}) {desc}'
+            links = ', '.join(['[%s](%s)' % item for item in get_url_list(project)])
+
+            line = tmpl.format(bullet=BULLET, name=project.name, links=links, desc=project.desc)
+
+            parts.append(line)
+        parts.append('\n\n')
+
+
+    return '\n'.join(parts)

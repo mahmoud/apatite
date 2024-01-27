@@ -403,6 +403,14 @@ class ProjectList(object):
             ret[tag_entry].sort(key=lambda x: x.name.lower())
         return ret
 
+    def get_projects_by_date_added(self):
+        ret = OMD()
+        for project in self.project_list:
+            ret.add(project.date_added.date(), project)
+        ret = ret.sorted(reverse=True)
+        return ret
+
+
 
 @attr.s
 class ResultFile(object):
